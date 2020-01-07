@@ -111,12 +111,16 @@ bool address_book::print()
     MYSQL_RES* result = mysql_store_result(_con);
     int num_fields = mysql_num_fields(result);
     int num_rows = mysql_num_rows(result);
+    if(num_rows == 0) {
+      cout << "未找到有效数据" << endl;
+      return true;
+    }
     for(int i = 0; i < num_rows; ++i) {
       row = mysql_fetch_row(result);
-      if(row) {
+      if(!row) {
         break;
       }
-      for(int j = 0; j < num_fields;++j) {
+      for(int j = 0; j < num_fields; ++j) {
         cout << row[j] << " ";
       }
       cout << endl;
@@ -145,12 +149,16 @@ bool address_book::_select(string& name)
   }
   else {
     MYSQL_ROW row;
-    MYSQL_RES* result = mysql_use_result(_con);
+    MYSQL_RES* result = mysql_store_result(_con);
     int num_fields = mysql_num_fields(result);
     int num_rows = mysql_num_rows(result);
+    if(num_rows == 0) {
+      cout << "未找到有效数据" << endl;
+      return true;
+    }
     for(int i = 0; i < num_rows; ++i) {
       row = mysql_fetch_row(result);
-      if(row) {
+      if(!row) {
         break;
       }
       for(int j = 0; j < num_fields; ++j) {
@@ -185,15 +193,43 @@ bool address_book::modify()
   return true;
 }
 
+//排序查询
+bool address_book::order()
+{
+  string sql = "select * from contact order by name ASC;";
+  if(mysql_query(_con, sql.c_str())) {
+    cout << "查询失败！" << endl;
+    return false;
+  }
+  else {
+    MYSQL_RES* result = mysql_store_result(_con);
+    MYSQL_ROW row;
+    int num_rows = mysql_num_rows(result);
+    int num_fields = mysql_num_fields(result);
+    for(int i = 0; i < num_rows; ++i) {
+      row  = mysql_fetch_row(result);
+      if(!row) {
+        break;
+      }
+      for(int j = 0; j < num_fields; ++j) {
+        cout << row[j] << " ";
+      }
+      cout << endl;
+    }
+    mysql_free_result(result);
+  }
+  return true;
+}
 void address_book::menu()
 {
-  std::cout << "****************" << std::endl;
-  std::cout << "\t1.添加\n" << std::endl;
+  std::cout << "**************************" << std::endl;
+  std::cout << "\t1.添加\t" << std::endl;
   std::cout << "\t2.显示\t" << std::endl;
   std::cout << "\t3.查询\t" << std::endl;
   std::cout << "\t4.修改\t" << std::endl;
   std::cout << "\t5.排序\t" << std::endl;
-  std::cout << "****************" << std::endl;
+  cout << "\t6.输入quit退出\t" << endl;
+  std::cout << "**************************" << std::endl;
 }
 
 void address_book::test()
@@ -218,7 +254,11 @@ void address_book::test()
       modify();
     }
     else if(chose.compare("5") == 0) {
-
+      order();
+    }
+    else if(chose.compare("quit") == 0) {
+      cout << "退出程序！" << endl;
+      break;
     }
     else {
       cout << "输入有误！" << endl;
