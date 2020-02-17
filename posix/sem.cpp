@@ -26,18 +26,33 @@ public:
 
   bool push(int& Data)
   {
+    sem_wait(&_pro_sem);
+    sem_wait(&_lock);
+    _vec[_pos_write] = Data;
+    _pos_write =  (_pos_write + 1) % _capacity;
+    //资源进行加一操作，唤醒消费者
+    sem_post(&_lock);
+    sem_post(&_con_sem);
     return true;
 
   }
 
   bool pop(int* Data)
   {
+    sem_wait(&_con_sem);
+    sem_wait(&_lock);
+    *Data = _vec[_pos_read];
+    _pos_read = (_pos_read + 1) % _capacity;
+    sem_post(&_lock);
+    sem_post(&_pro_sem);
     return true;
   }
 
   ~RingQueue()
   {
-
+    sem_destroy(&_pro_sem);
+    sem_destroy(&_con_sem);
+    sem_destroy(&_lock);
   }
 private:
   std::vector<int> _vec;
