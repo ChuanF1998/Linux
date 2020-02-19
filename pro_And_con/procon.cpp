@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <queue>
@@ -20,11 +21,11 @@ class BlockQueue
     {
       pthread_mutex_lock(&q_mutex);
 
-      *Data = _queue.front();
       while (_queue.empty()) {
         pthread_cond_wait(&_consumecond, &q_mutex);
 
       }
+      *Data = _queue.front();
       _queue.pop();
       pthread_mutex_unlock(&q_mutex);
       pthread_cond_signal(&_producecond);
@@ -41,6 +42,7 @@ class BlockQueue
       _queue.push(Data);
       pthread_mutex_unlock(&q_mutex);
       pthread_cond_signal(&_consumecond);
+      return true;
     }
 
     bool isFull()
@@ -75,6 +77,7 @@ void* consumeStart(void* arg)
     int Data;
     bq->Pop(&Data);
     std::cout << "consume " << pthread_self() << " " << Data << std::endl;
+    sleep(2);
   }
 
   return NULL;
@@ -88,6 +91,7 @@ void* produceStart(void* arg)
     bq->Push(i);
     std::cout << "produce " << pthread_self() << " " << i << std::endl;
     i++;
+    sleep(2);
   }
   return NULL;
 
