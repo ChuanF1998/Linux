@@ -5,6 +5,7 @@
 #include <vector>
 
 #define SIZE 4
+#define THREADCOUNT 4
 
 class RingQueue
 {
@@ -68,10 +69,59 @@ private:
   //锁
   sem_t _lock;
 
+};
+
+void* ProStart(void* arg)
+{
+  (void)arg;
+  RingQueue* tq = (RingQueue*) arg;
+  int i = 0;
+  while (1) {
+    tq->push(i);
+    std::cout << "prostart make " << pthread_self() << " " << i << std::endl;
+    i++; 
+  }
+  return NULL;
+
+}
+
+void* ConStart(void* arg)
+{
+  (void)arg;
+  RingQueue* tq = (RingQueue*) arg;
+  int Data;
+  while (1) {
+    tq->pop(&Data);
+    std::cout << "constart consume " << pthread_self() << " " << Data << std::endl;
+  }
+  return NULL;
 }
 
 int main()
 {
-
+  RingQueue* tq = new RingQueue();
+  pthread_t pro_tid[THREADCOUNT], con_tid[THREADCOUNT];
+  int i = 0;
+  int ret = -1;
+  for (i = 0; i < THREADCOUNT; ++i) {
+    ret = pthread_create(&pro_tid[i], NULL, ProStart, (void*)tq);
+    if (ret != 0) {
+      std::cout << "ctreate thread failed !" << std::endl;
+      return 0;
+    }
+  }
+  for (i = 0; i < THREADCOUNT; ++i) {
+    ret = pthread_create(&con_tid[i], NULL, ConStart, (void*)tq);
+    if (ret != 0) {
+      std::cout << "ctreate thread failed !" << std::endl;
+      return 0;
+    }
+  }
+  for (i = 0; i < THREADCOUNT; ++i) {
+    pthread_join(pro_tid[i], NULL);
+    pthread_join(con_tid[i], NULL);
+  }
+  delete tq;
   return 0;
 }
+
