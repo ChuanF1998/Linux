@@ -1,9 +1,10 @@
 #include <stdio.h>
-int main(int argc, char *argv[], char *env[])
+#include <stdlib.h>
+int main()
 {
-  int i = 0;
-  for(; env[i]; i++){
-    printf("%s\n", env[i]);
+  char * env = getenv("MYENV");
+  if(env){
+    printf("%s\n", env);
 
   }
   return 0;
