@@ -1,6 +1,17 @@
 #include "tcpsvr.hpp"
 #include <sys/wait.h>
+#include <signal.h>
 
+void sigcd(int signo)
+{
+  while (1) {
+    (void)signo;
+    int ret = waitpid(-1, NULL, WNOHANG);
+    if (ret == 0) {
+      break;
+    }
+  }
+}
 
 int main(int argc, char* argv[])
 {
@@ -8,10 +19,11 @@ int main(int argc, char* argv[])
     printf("./svr [ip] [port]\n");
     return 0;
   }
-  
+
+  signal(SIGCHLD, sigcd);
   std::string ip = argv[1];
   uint16_t port = atoi(argv[2]);
-  
+
   TcpSvr ts;
   if (!ts.CreateSock()) {
     return 0;
@@ -39,7 +51,7 @@ int main(int argc, char* argv[])
       exit(1);
     }
     else if (pid == 0) {
-    //子进程服务
+      //子进程服务
       std::string buf;
       while (1) {
 
@@ -56,6 +68,6 @@ int main(int argc, char* argv[])
     }
     peerts.Close();
   }
-    waitpid(-1, NULL, WUNTRACED);
+  //waitpid(-1, NULL, WUNTRACED);
   return 0;
 }
